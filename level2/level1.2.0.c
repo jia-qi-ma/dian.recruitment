@@ -14,6 +14,7 @@ typedef struct //用于记录学生及其在这一天预约的位置
     int reserveRow;
     int reserveCol;
     int havereservation;
+    int lahei;
 } STUDENT;
 
 SEAT seat[5][4][4];//5指楼层；4，4指行与列
@@ -33,6 +34,11 @@ void select(int floor, int row, int col, char student)//该函数用于选座
     if (seat[floor-1][row-1][col-1].istaken==1) 
     {
         printf("select failed: seat taken\n");
+        return;
+    }
+    if (stu[student_id].lahei==1) 
+    {
+        printf("you are blocked\n");
         return;
     }
     seat[floor-1][row-1][col-1].istaken=1;
@@ -244,6 +250,76 @@ void deleteSeat(int floor, int row, int col)
     printf("Seat deleted permanently!\n");
 }
 
+void blockUser(char username)
+{
+    if (username < 'A' || username > 'Z') {
+        printf("Invalid username\n");
+        return;
+    }
+    
+    int id = username - 'A';
+    if (stu[id].lahei == 1) {
+        printf("User %c is already blocked\n", username);
+        return;
+    }
+    
+    stu[id].lahei = 1;
+    printf("User %c has been blocked\n", username);
+    
+    openfilewrite();  
+    if(stu[id].havereservation==1)
+    cancel(id);
+    writedata(file);
+}
+
+void unblockUser(char username)
+{
+    if (username < 'A' || username > 'Z') {
+        printf("Invalid username\n");
+        return;
+    }
+    
+    int id = username - 'A';
+    if (stu[id].lahei == 0) {
+        printf("User %c is not blocked\n", username);
+        return;
+    }
+    
+    stu[id].lahei = 0;
+    printf("User %c has been unblocked\n", username);
+}
+
+void getdatastu(FILE* file)//该函数用于读取数据
+{
+    file=fopen("stu.txt","r");
+    int bianli;
+            for(int y=0;y<26;y++)
+            {
+                bianli=fgetc(file);
+                stu[y].lahei=bianli;
+            }
+    fclose(file);
+}
+void writedatastu(FILE*file)
+{
+    file=fopen("stu.txt","w");
+    for(int y=0;y<26;y++)
+    {
+        fputc(stu[y].lahei,file);
+    }
+    fclose(file);
+}
+
+void showblock()
+{
+    printf("These users are blocked\n");
+    for(int i=0;i<26;i++)
+    {
+        if(stu[i].lahei==1)printf("%c ",stu[i].name);
+    }
+    printf("\n");
+}
+
 int main()
 {   
     // 此循环用于录入学生用户名
@@ -251,7 +327,10 @@ int main()
     {
         stu[i].name = 'A' + i;
         stu[i].havereservation=0;
+        stu[i].lahei=0;
     }
+    
+    getdatastu(file);
     
     // // 此循环用于初始化座位状态（之后改成从文件中读取）
     for (int f = 0; f < 5; f++) {
@@ -322,7 +401,7 @@ int main()
 
             case 3:
                 while (1) {
-                    printf("\nEnter command (View/Exit/Clear/Delete): ");
+                    printf("\nEnter command (View/Exit/Clear/Delete/Block/Unblock): ");
                     scanf("%s", action);
                     if (strcmp(action, "Exit")==0) 
                     {
@@ -359,6 +438,29 @@ int main()
                         deleteSeat(f, r, c);
                         writedata(file);
                     }
+
+                    else if(strcmp(action, "Block")==0)
+                    { 
+                        getdatastu(file);
+                        char username;
+                        showblock();
+                        printf("Enter username to block (A-Z): ");
+                        scanf(" %c", &username);
+                        blockUser(username);
+                        writedatastu(file);
+                    }
+
+                    else if(strcmp(action, "Unblock")==0)
+                    { 
+                        getdatastu(file);
+                        char username;
+                        showblock();
+                        printf("Enter username to block (A-Z): ");
+                        scanf(" %c", &username);
+                        unblockUser(username);
+                        writedatastu(file);
+                    }
+
 
                     else
                     {
